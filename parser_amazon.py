@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
 # import re
 import regex as re
 import time
@@ -11,9 +12,11 @@ import pandas as pd
 
 
 def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedbaks'):
+    """Load feedbacks from Amazon by Asin"""
     writer = pd.ExcelWriter(filename + '.xlsx')
     for elem, sku in enumerate(sku_list):
 
+        # Pause after first page
         if elem > 0:
             time.sleep(random.randint(20, 40))
         url = 'https://www.amazon.com/t/product-reviews/' + str(sku)
@@ -28,10 +31,12 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
         driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
 
-        df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region'])
+        df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer'])
         pattern = r"(?<=\w)(?=[A-Z])"
         wait = WebDriverWait(driver, 40)
         driver.refresh()
+
+        # Sort by most resent
         sort = driver.find_element(By.CSS_SELECTOR, 'span.a-button-text.a-declarative[data-action="a-dropdown-button"]')
         sort.click()
         option = driver.find_element(By.ID, "sort-order-dropdown_1")
@@ -45,32 +50,44 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
             time.sleep(random.randint(1, 4))
             wait = WebDriverWait(driver, 40)
             reviews = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.a-section.review.aok-relative")))
+            # Load all review in page(10 units)
             page_reviews = driver.find_elements(By.CSS_SELECTOR, "div.a-section.review.aok-relative")
 
             for review in page_reviews:
                 try:
+                    # Load main fields in review
                     rating = review.find_element(By.CSS_SELECTOR, 'a.a-link-normal').accessible_name
                     status = review.find_element(By.CSS_SELECTOR, 'span[data-hook="avp-badge"]').text
                     date_reg = review.find_element(By.CSS_SELECTOR, '.a-size-base.a-color-secondary.review-date').text
                     region, date = date_reg.split('on')
                     title = review.find_element(By.CSS_SELECTOR,
                                                 '.a-size-base.a-link-normal.review-title.a-color-base.review-title'
-                                                '-content.a-text-bold').text
+                                                '-content.a-text-bold')
+                    link=title.get_attribute("href")
+                    title=title.text
                     text = review.find_element(By.CSS_SELECTOR, "div.a-row.a-spacing-small.review-data").text
                     record = {'Rating': rating, 'Status': status, 'Text': title + '/' + text, 'Date': date,
-                              'Region': region}
+                              'Region': region,'Link':link}
+
+                    # finding if review is created by influencer
+                    customer=review.find_element(By.CSS_SELECTOR,"a.a-profile")
+                    if customer.get_attribute("data-a-verified"):
+                        record['Influencer'] = customer.get_attribute("href")
+                    else:
+                        record['Influencer']='No'
+
+                    # Finding additional info fields
                     try:
                         add_info = review.find_element(By.CSS_SELECTOR, 'a[data-hook="format-strip"]')
                         asin=add_info.get_attribute("href").split(sep='/')[5]
-                        link=add_info.get_attribute("href")
                         add_info=add_info.text
 
-                    except Exception as ex:
+                    except NoSuchElementException:
+                        add_info=False
                         pass
                     if add_info:
                         split_strings = re.split(pattern, add_info)
                         split_strings.append('Asin: '+asin)
-                        split_strings.append('Link: ' + link)
                         for category in split_strings:
                             category=category.split(sep=': ', maxsplit=1)
                             if category[0] not in df.columns:
@@ -105,5 +122,5 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
     writer.close()
 
 
-scrap_feedbaks(['B07DM8XQ9C'], end_mounth='May', filename='allergy & immune')
+scrap_feedbaks(['B07W8LYX4S','B09MSQ12HQ','B09HJLJ4CD','B0BW9MZJJW','B0977MR1DK'], end_mounth='January', filename='test3')
 # url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'
