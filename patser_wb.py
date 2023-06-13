@@ -8,11 +8,11 @@ import time
 import pandas as pd
 
 
-def scrap_feedbaks(sku_list=[]):
+def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbaks'):
 
     for sku in sku_list:
 
-        url = 'https://www.wildberries.ru/catalog/'+str(sku)+'/feedbacks'
+        url = 'https://www.wildberries.ru/catalog/'+str(sku)+'/feedbacks&sort=date'
 
         # Запускаем браузер Chrome и открываем страницу с отзывами
 
@@ -27,6 +27,8 @@ def scrap_feedbaks(sku_list=[]):
         wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, "ul.comments__list[data-link]")))
         total_reviews = driver.find_elements(By.XPATH, '//span[@class="product-feedbacks__count"]')
         total_reviews = int(total_reviews[0].text)
+        if total_reviews>= max_numb:
+            total_reviews=max_numb
         print(total_reviews)
 
         df = pd.DataFrame(columns=['Rating', 'Text', 'Date'])

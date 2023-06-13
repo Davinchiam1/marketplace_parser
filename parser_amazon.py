@@ -1,4 +1,7 @@
+import datetime
 import random
+import traceback
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,9 +14,11 @@ import time
 import pandas as pd
 
 
-def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedbaks'):
+def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks'):
     """Load feedbacks from Amazon by Asin"""
     writer = pd.ExcelWriter(filename + '.xlsx')
+    end_date=datetime.datetime.strptime(end_date, "%d %B %Y")
+    temp_frame=pd.DataFrame()
     for elem, sku in enumerate(sku_list):
 
         # Pause after first page
@@ -32,7 +37,7 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
         driver.get(url)
 
         df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer'])
-        pattern = r"(?<=\w)(?=[A-Z])"
+        pattern = r"(?<=\w|\))(?=[A-Z])"
         wait = WebDriverWait(driver, 40)
         driver.refresh()
 
@@ -54,10 +59,14 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
             page_reviews = driver.find_elements(By.CSS_SELECTOR, "div.a-section.review.aok-relative")
 
             for review in page_reviews:
+                exp = None
                 try:
                     # Load main fields in review
-                    rating = review.find_element(By.CSS_SELECTOR, 'a.a-link-normal').accessible_name
-                    status = review.find_element(By.CSS_SELECTOR, 'span[data-hook="avp-badge"]').text
+                    rating = review.find_element(By.CSS_SELECTOR, 'i[data-hook="review-star-rating"] span.a-icon-alt').get_attribute("innerHTML")
+                    try:
+                        status = review.find_element(By.CSS_SELECTOR, 'span[data-hook="avp-badge"]').text
+                    except NoSuchElementException:
+                        status='Unverified'
                     date_reg = review.find_element(By.CSS_SELECTOR, '.a-size-base.a-color-secondary.review-date').text
                     region, date = date_reg.split('on')
                     title = review.find_element(By.CSS_SELECTOR,
@@ -87,6 +96,17 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
                         pass
                     if add_info:
                         split_strings = re.split(pattern, add_info)
+                        result = [split_strings[0]]
+                        j=0
+
+                        for i in range(1, len(split_strings)):
+                            if len(split_strings[i]) < 3 or ':' not in split_strings[i]:
+                                result[j] += split_strings[i]
+                            else:
+                                result.append(split_strings[i])
+                                j+=1
+                        split_strings=result
+
                         split_strings.append('Asin: '+asin)
                         for category in split_strings:
                             category=category.split(sep=': ', maxsplit=1)
@@ -96,12 +116,17 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
 
                     # df = pd.concat([df, pd.DataFrame(record)], ignore_index=True)
                     df.loc[len(df)] = record
-                    if end_mounth in date:
+                    if datetime.datetime.strptime(date.strip(), "%B %d, %Y") < end_date:
                         flag = True
                         break
-                except Exception as e:
+                except Exception as exp:
+                    print(exp)
+                    traceback.print_exc()
                     df['Date'] = pd.to_datetime(df['Date'])
-                    df.to_excel(writer, sheet_name=str(sku))
+                    if len(sku_list) > 9:
+                        temp_frame=pd.concat([temp_frame, df], axis=0)
+                    else:
+                        df.to_excel(writer, sheet_name=str(sku))
             index = index + 10
             if flag:
                 break
@@ -117,10 +142,15 @@ def scrap_feedbaks(sku_list=[], max_numb=2000, end_mounth=None, filename='feedba
 
         driver.quit()
         df['Date'] = pd.to_datetime(df['Date'])
-        df.to_excel(writer, sheet_name=str(sku))
+        if len(sku_list) > 9:
+            temp_frame=pd.concat([temp_frame, df], axis=0)
+        else:
+            df.to_excel(writer, sheet_name=str(sku))
         print('---' * 10)
+    if len(sku_list) > 9:
+        temp_frame.to_excel(writer, sheet_name='main')
     writer.close()
 
 
-scrap_feedbaks(['B07W8LYX4S','B09MSQ12HQ','B09HJLJ4CD','B0BW9MZJJW','B0977MR1DK'], end_mounth='January', filename='test3')
+# scrap_feedbaks(['B015XMKZWW'], end_date='1 June 2023', filename='test4')
 # url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'
