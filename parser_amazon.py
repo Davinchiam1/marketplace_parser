@@ -66,7 +66,10 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
                     try:
                         status = review.find_element(By.CSS_SELECTOR, 'span[data-hook="avp-badge"]').text
                     except NoSuchElementException:
-                        status='Unverified'
+                        try:
+                            status = review.find_element(By.XPATH, '//span[contains(@class, "a-color-success") and contains(@class, "a-text-bold")]').text
+                        except:
+                            status='Unverified'
                     date_reg = review.find_element(By.CSS_SELECTOR, '.a-size-base.a-color-secondary.review-date').text
                     region, date = date_reg.split('on')
                     title = review.find_element(By.CSS_SELECTOR,
@@ -152,5 +155,5 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
     writer.close()
 
 
-# scrap_feedbaks(['B015XMKZWW'], end_date='1 June 2023', filename='test4')
+scrap_feedbaks(['B0BZLYBWV5'], end_date='1 January 2023', filename='test4')
 # url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'
