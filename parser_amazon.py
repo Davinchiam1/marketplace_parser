@@ -36,7 +36,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
 
-        df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer'])
+        df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer','Main_Asin'])
         pattern = r"(?<=\w|\))(?=[A-Z])"
         wait = WebDriverWait(driver, 40)
         driver.refresh()
@@ -79,7 +79,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
                     title=title.text
                     text = review.find_element(By.CSS_SELECTOR, "div.a-row.a-spacing-small.review-data").text
                     record = {'Rating': rating, 'Status': status, 'Text': title + '/' + text, 'Date': date,
-                              'Region': region,'Link':link}
+                              'Region': region,'Link':link, 'Main_Asin':sku}
 
                     # finding if review is created by influencer
                     customer=review.find_element(By.CSS_SELECTOR,"a.a-profile")
@@ -155,5 +155,5 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
     writer.close()
 
 
-scrap_feedbaks(['B0BZLYBWV5'], end_date='1 January 2023', filename='test4')
+# scrap_feedbaks(['B0BZLYBWV5'], end_date='1 January 2023', filename='test4')
 # url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'
