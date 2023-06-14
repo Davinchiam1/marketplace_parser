@@ -31,10 +31,11 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         # Запускаем браузер Chrome и открываем страницу с отзывами
 
         chrome_options = Options()
-        # chrome_options.add_argument('--headless')
-        # chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
         driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
+        # driver.delete_all_cookies()
 
         df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer','Main_Asin'])
         pattern = r"(?<=\w|\))(?=[A-Z])"
@@ -128,16 +129,19 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
                     df['Date'] = pd.to_datetime(df['Date'])
                     if len(sku_list) > 9:
                         temp_frame=pd.concat([temp_frame, df], axis=0)
+                        temp_frame.to_excel('intervediate'+filename + '.xlsx')
                     else:
                         df.to_excel(writer, sheet_name=str(sku))
             index = index + 10
             if flag:
                 break
             time.sleep(random.randint(1, 10))
-            driver.refresh()
+            # driver.refresh()
             wait = WebDriverWait(driver, 40)
             next_button = driver.find_element(By.CSS_SELECTOR, "li.a-last")
             if next_button.get_attribute("class") != 'a-disabled a-last':
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(random.randint(1, 4))
                 next_button.click()
                 print(index)
             else:
@@ -152,6 +156,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         print('---' * 10)
     if len(sku_list) > 9:
         temp_frame.to_excel(writer, sheet_name='main')
+    print('Finished')
     writer.close()
 
 
