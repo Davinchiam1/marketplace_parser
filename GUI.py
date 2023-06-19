@@ -1,12 +1,14 @@
 import tkinter as tk
 import os
 import calendar
+import threading
 from tkinter import filedialog
 from tkinter import messagebox
 import pandas as pd
 from tkcalendar import DateEntry
 import parser_amazon
 import patser_wb
+import hel10_sales_download as h10
 from datetime import datetime
 
 class App(tk.Frame):
@@ -64,10 +66,25 @@ class App(tk.Frame):
         self.save_button.grid(row=6, column=2)
 
         self.load_button = tk.Button(self, text="Load feedbacks...", command=self.load_feedbacks)
-        self.load_button.grid(row=7, column=1)
+        self.load_button.grid(row=7, column=0)
 
+        self.load_sales_button = tk.Button(self, text="Load sales...", command=self.load_sales)
+        self.load_sales_button.grid(row=7, column=1)
 
+        self.human_interraction = tk.Button(self, text="Ready!", command=self.human_ready)
+        self.human_interraction.grid(row=7, column=2)
 
+    def update_human_button_state(self):
+        if h10.human_inter:  # Условие для включения/выключения кнопки
+            self.human_interraction.config(state=tk.NORMAL)  # Включить кнопку
+        else:
+            self.human_interraction.config(state=tk.DISABLED)  # Выключить кнопку
+
+    def load_feedbacks_thread(self):
+        threading.Thread(target=self.load_feedbacks).start()
+
+    def load_sales_thread(self):
+        threading.Thread(target=self.load_sales).start()
 
     def browse_save_directory(self):
         """Get dir to save loaded files"""
@@ -111,7 +128,20 @@ class App(tk.Frame):
             parser=patser_wb
         parser.scrap_feedbaks(sku_list=asin_list, end_date=end_date, filename=filename)
 
+    def load_sales(self):
+        asin_list = self.asin_entry.get()
+        if os.path.isfile(asin_list):
+            if os.path.splitext(asin_list)[1] == '.csv':
+                asin_frame = pd.read_csv(asin_list, delimiter=';')
+            elif os.path.splitext(asin_list)[1] == '.xlsx':
+                asin_frame = pd.read_excel(asin_list)
+            asin_list = list(asin_frame['Asin'])
+        else:
+            asin_list=[asin_list]
+        h10.load_sales(asin_list=asin_list)
 
+    def human_ready(self):
+        h10.human_inter=False
 
 root = tk.Tk()
 root.title("Parser App")
@@ -121,4 +151,6 @@ root.columnconfigure(3, minsize=50, weight=1)
 root.columnconfigure(1, minsize=50, weight=1)
 
 app = App(master=root)
+app.load_button.config(command=app.load_feedbacks_thread)  # Запуск load_feedbacks в отдельном потоке
+app.load_sales_button.config(command=app.load_sales_thread)
 app.mainloop()
