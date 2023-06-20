@@ -72,7 +72,14 @@ def load_sales(asin_list=None, login_text='denissdolzhenkov@gmail.com', password
         open_graph = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sc-ga-dRe")))
         # open_graph = driver.find_element(By.CSS_SELECTOR, "div.sc-ga-dRe")
         time.sleep(random.randint(1, 3))
-        open_graph.click()
+        try:
+            open_graph.click()
+        except Exception as exp:
+            driver.refresh()
+            wait = WebDriverWait(driver, 20)  # Максимальное время ожидания в секундах
+            open_graph = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sc-ga-dRe")))
+            time.sleep(random.randint(1, 3))
+            open_graph.click()
         time.sleep(random.randint(1, 3))
 
         all_time = driver.find_element(By.XPATH, "//li[contains(text(), 'All Time')]")
