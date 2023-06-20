@@ -27,7 +27,7 @@ def _rename_files_in_folder(folder_path, keyword='chart', asin_list=None):
         print(f"Файл {file} переименован в {new_name}.")
 
 
-def load_sales(asin_list=None, login_text='denissdolzhenkov@gmail.com', password_text='#R0v5*I0BU!s'):
+def load_sales(asin_list=None, login_text='denissdolzhenkov@gmail.com', password_text='#R0v5*I0BU!s',save_directory=None):
     # Путь к файлу расширения .crx
     extension_path = 'helium.crx'
     extension_path = os.path.abspath(extension_path)
@@ -36,7 +36,15 @@ def load_sales(asin_list=None, login_text='denissdolzhenkov@gmail.com', password
     # Создание объекта ChromeOptions и указание пути к расширению
     chrome_options = Options()
     chrome_options.add_extension(extension_path)
-
+    if save_directory is not None:
+        download_dir = save_directory
+        prefs = {
+            "download.default_directory": download_dir,
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": False
+        }
+        chrome_options.add_experimental_option("prefs", prefs)
     # Инициализация драйвера Chrome
     driver = webdriver.Chrome(options=chrome_options)
     driver.get('https://members.helium10.com/user/signup?type=chrome-extension')
@@ -69,18 +77,25 @@ def load_sales(asin_list=None, login_text='denissdolzhenkov@gmail.com', password
         while human_inter:
             time.sleep(1)
         wait = WebDriverWait(driver, 20)  # Максимальное время ожидания в секундах
-        open_graph = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sc-ga-dRe")))
+        try:
+            open_graph = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sc-ga-dRe")))
+            time.sleep(random.randint(1, 3))
+        except Exception as exp:
+            driver.refresh()
+            wait = WebDriverWait(driver, 20)  # Максимальное время ожидания в секундах
+            open_graph = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sc-ga-dRe")))
+            time.sleep(random.randint(1, 3))
         # open_graph = driver.find_element(By.CSS_SELECTOR, "div.sc-ga-dRe")
-        time.sleep(random.randint(1, 3))
+
         try:
             open_graph.click()
+            time.sleep(random.randint(1, 3))
         except Exception as exp:
             driver.refresh()
             wait = WebDriverWait(driver, 20)  # Максимальное время ожидания в секундах
             open_graph = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sc-ga-dRe")))
             time.sleep(random.randint(1, 3))
             open_graph.click()
-        time.sleep(random.randint(1, 3))
 
         all_time = driver.find_element(By.XPATH, "//li[contains(text(), 'All Time')]")
         all_time.click()
