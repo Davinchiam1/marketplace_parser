@@ -80,8 +80,6 @@ class App(tk.Frame):
         else:
             self.human_interraction.config(state=tk.DISABLED)  # Выключить кнопку
 
-    def load_feedbacks_thread(self):
-        threading.Thread(target=self.load_feedbacks).start()
 
     def load_sales_thread(self):
         threading.Thread(target=self.load_sales).start()
@@ -151,6 +149,5 @@ root.columnconfigure(3, minsize=50, weight=1)
 root.columnconfigure(1, minsize=50, weight=1)
 
 app = App(master=root)
-app.load_button.config(command=app.load_feedbacks_thread)  # Запуск load_feedbacks в отдельном потоке
 app.load_sales_button.config(command=app.load_sales_thread)
 app.mainloop()

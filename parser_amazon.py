@@ -19,6 +19,8 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
     writer = pd.ExcelWriter(filename + '.xlsx')
     end_date=datetime.datetime.strptime(end_date, "%d %B %Y")
     temp_frame=pd.DataFrame()
+    if by_stars:
+        total = pd.DataFrame(columns=['Stars', 'Ratings', 'Reviews', 'Asin'])
     for elem, sku in enumerate(sku_list):
 
         # Pause after first page
@@ -30,7 +32,6 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         if by_stars:
             num=0
             rate_list=[str(5),str(4),str(3),str(2),str(1)]
-            total = pd.DataFrame(columns=['Stars', 'Ratings', 'Reviews','Asin'])
 
         # Запускаем браузер Chrome и открываем страницу с отзывами
 
@@ -39,18 +40,30 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         # chrome_options.add_argument('--disable-gpu')
         driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
-        # driver.delete_all_cookies()
+        driver.delete_all_cookies()
 
         df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer','Main_Asin'])
         pattern = r"(?<=\w|\))(?=[A-Z])"
-        wait = WebDriverWait(driver, 40)
+        wait = WebDriverWait(driver, 30)
         driver.refresh()
 
         # Sort by most resent
-        sort = driver.find_element(By.CSS_SELECTOR, 'span.a-button-text.a-declarative[data-action="a-dropdown-button"]')
-        sort.click()
-        option = driver.find_element(By.ID, "sort-order-dropdown_1")
-        option.click()
+        try:
+            sort = driver.find_element(By.CSS_SELECTOR, 'span.a-button-text.a-declarative[data-action="a-dropdown-button"]')
+            sort.click()
+            option = driver.find_element(By.ID, "sort-order-dropdown_1")
+            option.click()
+        except NoSuchElementException:
+            driver.close()
+            time.sleep(random.randint(20, 40))
+            driver.delete_all_cookies()
+            driver.get(url)
+            driver.refresh()
+            sort = driver.find_element(By.CSS_SELECTOR,
+                                       'span.a-button-text.a-declarative[data-action="a-dropdown-button"]')
+            sort.click()
+            option = driver.find_element(By.ID, "sort-order-dropdown_1")
+            option.click()
         # driver.execute_script("arguments[0].click();", sort_dropdown)
         # time.sleep(5)
         # sort.click()
@@ -58,20 +71,20 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         while index < max_numb:
             # Ждем, пока страница полностью загрузится
             if by_stars and (index ==0 or index==100):
+                flag=False
                 time.sleep(1)
                 ratings = driver.find_element(By.CSS_SELECTOR, '#a-autoid-5-announce')
                 ratings.click()
                 time.sleep(1)
                 box=driver.find_element(By.XPATH, f"//a[@class='a-dropdown-link' and text()='{rate_list[num]} star only']")
                 box.click()
-                time.sleep(random.randint(1, 4))
-                wait = WebDriverWait(driver, 40)
                 marks_count = driver.find_element(By.CSS_SELECTOR,'div.a-row.a-spacing-base.a-size-base').text.split('total ratings,')
-                total.loc[len(total)] = { 'Stars': rate_list[num],'Ratings': marks_count[0], 'Reviews': marks_count[1].split('with')[0],'Asin':sku}
+                total.loc[len(total)] = {'Stars': rate_list[num], 'Ratings': marks_count[0].replace(",", ""),
+                                         'Reviews': marks_count[1].split('with')[0].replace(",", ""),'Asin':sku}
 
 
             time.sleep(random.randint(1, 4))
-            wait = WebDriverWait(driver, 40)
+            wait = WebDriverWait(driver, 30)
             reviews = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.a-section.review.aok-relative")))
             # Load all review in page(10 units)
             page_reviews = driver.find_elements(By.CSS_SELECTOR, "div.a-section.review.aok-relative")
@@ -81,6 +94,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
                 try:
                     # Load main fields in review
                     rating = review.find_element(By.CSS_SELECTOR, 'i[data-hook="review-star-rating"] span.a-icon-alt').get_attribute("innerHTML")
+
                     try:
                         status = review.find_element(By.CSS_SELECTOR, 'span[data-hook="avp-badge"]').text
                     except NoSuchElementException:
@@ -137,12 +151,13 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
 
                     # df = pd.concat([df, pd.DataFrame(record)], ignore_index=True)
                     df.loc[len(df)] = record
-                    if datetime.datetime.strptime(date.strip(), "%B %d, %Y") < end_date and not by_stars:
+                    if datetime.datetime.strptime(date.strip(), "%B %d, %Y") < end_date:
                         flag = True
                         print('brake2')
                         break
                 except Exception as exp:
                     print(exp)
+                    time.sleep(10)
                     traceback.print_exc()
                     df['Date'] = pd.to_datetime(df['Date'])
                     if len(sku_list) > 9:
@@ -151,7 +166,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
                     else:
                         df.to_excel(writer, sheet_name=str(sku))
             index = index + 10
-            if by_stars and index==100:
+            if by_stars and (index==100 or flag):
                 print(index)
                 num=num+1
                 index = 0
@@ -160,10 +175,15 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
                 continue
             if flag:
                 break
-            time.sleep(random.randint(1, 10))
+            time.sleep(random.randint(1, 7))
             # driver.refresh()
-            wait = WebDriverWait(driver, 40)
-            next_button = driver.find_element(By.CSS_SELECTOR, "li.a-last")
+            wait = WebDriverWait(driver, 30)
+            try:
+                next_button = driver.find_element(By.CSS_SELECTOR, "li.a-last")
+            except NoSuchElementException:
+                if by_stars:
+                    if int(marks_count[1].split('with')[0].replace(",", ""))<100:
+                        break
             if next_button.get_attribute("class") != 'a-disabled a-last':
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(random.randint(1, 4))
@@ -194,5 +214,5 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
     writer.close()
 
 
-scrap_feedbaks(['B00280M13O'], end_date='1 January 2021', filename='test4')
+# scrap_feedbaks(['B00280M13O','B079YXFCWT'], end_date='1 January 2021', filename='test5')
 # url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'
