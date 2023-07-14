@@ -9,6 +9,7 @@ from tkcalendar import DateEntry
 import parser_amazon
 import patser_wb
 import hel10_sales_download as h10
+
 from datetime import datetime
 
 class App(tk.Frame):
@@ -20,11 +21,11 @@ class App(tk.Frame):
 
     def create_widgets(self):
         """Main window with load from api and load from files blocks"""
-        self.asin_label = tk.Label(self, text="ASIN:")
+        self.asin_label = tk.Label(self, text="ASIN/KEY:")
         self.asin_label.grid(row=0, column=0, sticky=tk.W)
         self.asin_entry = tk.Entry(self)
         self.asin_entry.grid(row=0, column=1)
-        self.asin_button = tk.Button(self, text="Browse ASIN file...", command=self.browse_asin_file)
+        self.asin_button = tk.Button(self, text="Browse ASIN/KEY file...", command=self.browse_asin_file)
         self.asin_button.grid(row=0, column=2)
 
         self.az_wb_var = tk.StringVar()
@@ -73,6 +74,9 @@ class App(tk.Frame):
 
         self.human_interraction = tk.Button(self, text="Ready!", command=self.human_ready)
         self.human_interraction.grid(row=7, column=2)
+
+        self.load_search_button = tk.Button(self, text="Load searches...", command=self.load_searches)
+        self.load_search_button.grid(row=7, column=3)
 
     def update_human_button_state(self):
         if h10.human_inter:  # Условие для включения/выключения кнопки
@@ -138,12 +142,23 @@ class App(tk.Frame):
             asin_list=[asin_list]
         h10.load_sales(asin_list=asin_list)
 
+    def load_searches(self):
+        key_list = self.asin_entry.get()
+        if os.path.isfile(key_list):
+            if os.path.splitext(key_list)[1] == '.csv':
+                key_frame = pd.read_csv(key_list, delimiter=';')
+            elif os.path.splitext(key_list)[1] == '.xlsx':
+                key_frame = pd.read_excel(key_list)
+            key_list = list(key_frame['Key'])
+        else:
+            key_list = [key_list]
+        h10.load_searches(key_list=key_list, save_directory=self.save_entry.get())
     def human_ready(self):
         h10.human_inter=False
 
 root = tk.Tk()
 root.title("Parser App")
-root.geometry("450x200")
+root.geometry("500x200")
 root.resizable(False, False)
 root.columnconfigure(3, minsize=50, weight=1)
 root.columnconfigure(1, minsize=50, weight=1)
