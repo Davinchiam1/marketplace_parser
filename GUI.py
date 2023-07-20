@@ -88,6 +88,9 @@ class App(tk.Frame):
     def load_sales_thread(self):
         threading.Thread(target=self.load_sales).start()
 
+    def load_searches_thread(self):
+        threading.Thread(target=self.load_searches).start()
+
     def browse_save_directory(self):
         """Get dir to save loaded files"""
         save_directory = filedialog.askdirectory()
@@ -165,4 +168,5 @@ root.columnconfigure(1, minsize=50, weight=1)
 
 app = App(master=root)
 app.load_sales_button.config(command=app.load_sales_thread)
+app.load_search_button.config(command=app.load_searches_thread)
 app.mainloop()

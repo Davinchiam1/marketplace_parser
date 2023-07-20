@@ -128,6 +128,9 @@ def load_searches(key_list=None, login_text=None, password_text=None, save_direc
                 login_text = parts[0].strip()
                 password_text = parts[1].strip()
 
+    global human_inter
+    human_inter = True
+
     # Создание объекта ChromeOptions и указание пути к расширению
     chrome_options = Options()
     if save_directory is not None:
@@ -154,6 +157,9 @@ def load_searches(key_list=None, login_text=None, password_text=None, save_direc
     password.send_keys(password_text)
     wait = WebDriverWait(driver, 10)
 
+    while human_inter:
+        time.sleep(1)
+
     element = driver.find_element(By.CSS_SELECTOR, "button.btn.btn-secondary.btn-block")
     element.click()
     time.sleep(random.randint(5, 10))
@@ -161,28 +167,26 @@ def load_searches(key_list=None, login_text=None, password_text=None, save_direc
     for num, key in enumerate(key_list):
 
         if num > 0:
-            driver.find_element(By.CSS_SELECTOR, 'body > div.sc-jJoQJp.bUuusJ.sc-jObWnj.bJytCr.fade-enter-done > '
-                                                 'div.sc-hiCibw.khgJUJ > div > div > div > '
-                                                 'div.sc-caiLqq.jpDEWM.sc-iAKWXU.lesjfG > div > button').click()
+            time.sleep(1)
+            element = driver.find_element(By.XPATH,"//button[@data-testid='close-button']")
+            element.click()
             driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(1)
-            element = driver.find_element(By.CSS_SELECTOR, 'svg.sc-dkQkyq.bOxpnL')
-            element.click()
-            time.sleep(random.randint(3, 7))
+            driver.find_element(By.XPATH, "//div[@data-testid='remove-button']").click()
         else:
             driver.get('https://members.helium10.com/magnet?accountId=1545867146')
 
         wait = WebDriverWait(driver, 30)  # Максимальное время ожидания в секундах
         try:
             enter_key = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "input.sc-jrQzAO.sc-eZhRLC.iykYoE.gtfCKx")))
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder=\"Enter a keyword\"]")))
             enter_key.send_keys(key)
             time.sleep(random.randint(1, 4))
-            element = driver.find_element(By.CSS_SELECTOR, 'button.sc-cxpSdN.kmbOJS')
+            element = driver.find_element(By.XPATH, "//button[contains(text(), 'Get Keywords')]")
             element.click()
             time.sleep(random.randint(1, 4))
             try:
-                button = driver.find_element(By.CSS_SELECTOR, 'button.sc-cxpSdN.eXArG')
+                button = driver.find_element(By.XPATH, "//button[contains(text(), 'Run New Search')]")
                 button.click()
             except Exception as exp:
                 time.sleep(20)
@@ -191,43 +195,43 @@ def load_searches(key_list=None, login_text=None, password_text=None, save_direc
             driver.refresh()
             wait = WebDriverWait(driver, 20)  # Максимальное время ожидания в секундах
             enter_key = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "input.sc-jrQzAO.sc-eZhRLC.iykYoE.gtfCKx")),)
+                EC.presence_of_element_located((By.XPATH, "//input[@placeholder=\"Enter a keyword\"]")), )
             enter_key.send_keys(key)
             time.sleep(random.randint(1, 4))
-            element = driver.find_element(By.CSS_SELECTOR, 'button.sc-cxpSdN.kmbOJS')
+            element = driver.find_element(By.XPATH, "//button[contains(text(), 'Get Keywords')]")
             element.click()
             time.sleep(random.randint(1, 4))
             try:
-                button = driver.find_element(By.CSS_SELECTOR, 'button.sc-cxpSdN.eXArG')
+                button = driver.find_element(By.XPATH, "//button[contains(text(), 'Run New Search')]")
                 button.click()
             except Exception as exp:
                 pass
         # open_graph = driver.find_element(By.CSS_SELECTOR, "div.sc-ga-dRe")
         wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "button.sc-cxpSdN.sc-gpZqVR.doevId.dvUaIT")))
+            EC.presence_of_element_located((By.XPATH, '//*[@id="re-container"]/div[2]/div[1]/div[2]/div/div['
+                                                      '3]/div/div[1]/div[1]/div[1]/div[3]/div[2]/div[1]/div[1]/div['
+                                                      '1]/button')))
         try:
-            graph = driver.find_element(By.CSS_SELECTOR, 'button.sc-cxpSdN.sc-gpZqVR.doevId.dvUaIT')
-            element=driver.find_element(By.CSS_SELECTOR, 'div.sc-fOZrBH.ihUZnp')
+            graph = driver.find_element(By.XPATH, '//*[@id="re-container"]/div[2]/div[1]/div[2]/div/div[3]/div/div['
+                                                  '1]/div[1]/div[1]/div[3]/div[2]/div[1]/div[1]/div[1]/button')
+            element = driver.find_element(By.XPATH, "//div[text()='Keyword Search Summary']")
             driver.execute_script("arguments[0].scrollIntoView();", element)
             time.sleep(1)
             graph.click()
             time.sleep(random.randint(1, 3))
         except Exception as exp:
 
-            graph = driver.find_element(By.CSS_SELECTOR, 'button.sc-cxpSdN.sc-gpZqVR.doevId.dvUaIT')
+            graph = driver.find_element(By.XPATH, '//*[@id="re-container"]/div[2]/div[1]/div[2]/div/div['
+                                                  '3]/div/div[1]/div[1]/div[1]/div[3]/div[2]/div[1]/div[1]/div['
+                                                  '1]/button')
             driver.execute_script("arguments[0].scrollIntoView();", element)
             time.sleep(1)
             graph.click()
             time.sleep(random.randint(1, 3))
         # show table of options
-        driver.find_element(By.CSS_SELECTOR, "body > div.sc-jJoQJp.bUuusJ.sc-jObWnj.bJytCr.fade-enter-done > "
-                                             "div.sc-hiCibw.khgJUJ > div > div > div > "
-                                             "div.sc-cTAqQK.bOnQBb.non-scroll-styles > div > "
-                                             "div.sc-zCoBu.haCish > div:nth-child(1) > div > span > "
-                                             "svg").click()
+        driver.find_element(By.XPATH, "//span[contains(text(), '1 Year')]").click()
         # click on last option
-        driver.find_elements(By.CSS_SELECTOR, 'div[data-grouped="false"].sc-gjNHFA.hSagLS > div[role="option"]')[
-            -1].click()
+        driver.find_element(By.XPATH, "//div[contains(text(), 'All time')]").click()
         time.sleep(random.randint(1, 3))
 
         menu = driver.find_element(By.CSS_SELECTOR, 'g.highcharts-no-tooltip')
