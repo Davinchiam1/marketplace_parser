@@ -237,24 +237,28 @@ class App(tk.Frame):
             key_list = list(key_frame['Key'])
         else:
             key_list = [key_list]
-        ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
-        if by_region:
-            ct.get_region()
-            time.sleep(10)
         if by_global:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.get_global()
             time.sleep(10)
+        if by_region:
+            ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
+            ct.get_region()
+            time.sleep(10)
         if by_country:
+            ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.get_by_country()
             time.sleep(10)
         if related_topics:
+            ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.related_topics()
             time.sleep(10)
         if related_searches:
+            ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.related_searches()
             time.sleep(10)
         if suggested_topics:
+            ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.suggested_topics()
             time.sleep(10)
 
