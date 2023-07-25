@@ -41,7 +41,7 @@ with _requests_get_as_post():
 
 class Common_trends:
     def __init__(self, kw_list=[], timeframe='today 5-y', region='US', savedir=None):
-        self.pt = TrendReq(retries=5)
+        self.pt = TrendReq(retries=5,timeout=(5, 10))
 
         # self.pt = TrendReq(hl="en-US", tz=360,requests_args=requests_args)
         self.kw_list = kw_list
