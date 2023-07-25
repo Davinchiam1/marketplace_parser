@@ -161,6 +161,8 @@ class App(tk.Frame):
         """Get asin from file"""
         filetypes = [("CSV files", "*.csv"), ("XLSX files", "*.xlsx")]
         directory = filedialog.askopenfilenames(initialdir=".", filetypes=filetypes)
+        if isinstance(directory, tuple):  # Проверяем, является ли result кортежем
+            directory = directory[0]
         self.asin_entry.delete(0, tk.END)
         self.asin_entry.insert(0, directory)
 
@@ -240,27 +242,27 @@ class App(tk.Frame):
         if by_global:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.get_global()
-            time.sleep(10)
+
         if by_region:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.get_region()
-            time.sleep(10)
+
         if by_country:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.get_by_country()
-            time.sleep(10)
+
         if related_topics:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.related_topics()
-            time.sleep(10)
+
         if related_searches:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.related_searches()
-            time.sleep(10)
+
         if suggested_topics:
             ct = Common_trends(kw_list=key_list, region=region, savedir=savedir)
             ct.suggested_topics()
-            time.sleep(10)
+
 
     def human_ready(self):
         h10.human_inter = False
