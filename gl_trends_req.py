@@ -15,11 +15,12 @@ requests_args = {
 
 class _TrendReq(TrendReq):
     pass
-    # ... добавьте вашу логику, если необходимо ...
+    # ... rewriting class functionality to make it work ...
 
 
 @contextlib.contextmanager
 def _requests_get_as_post():
+    # replacing methods
     requests.get, requests_get = requests.post, requests.get
     try:
         yield
@@ -27,7 +28,7 @@ def _requests_get_as_post():
         requests.get = requests_get
 
 
-# Используйте _TrendReq вместо TrendReq
+# using _TrendReq instead of TrendReq
 with _requests_get_as_post():
     pytrends = _TrendReq()
 
@@ -40,7 +41,20 @@ with _requests_get_as_post():
 
 
 class Common_trends:
+    """Getting data from Google Trends about selected keywords."""
     def __init__(self, kw_list=[], timeframe='today 5-y', region='US', savedir=None):
+        """
+           Creating base element to request data from Google Trends.
+
+            Args:
+                kw_list (list): list of keywords for request
+                timeframe (string): time for collection of statistics
+                region (string): two-letter designation of the region
+                savedir (string): path to save results of requests
+
+            Returns:
+                None
+        """
         self.pt = TrendReq(retries=5,timeout=(5, 10))
 
         # self.pt = TrendReq(hl="en-US", tz=360,requests_args=requests_args)
@@ -50,6 +64,8 @@ class Common_trends:
         self.savedir = savedir + '\\'
 
     def get_region(self):
+        """Get data on relative interest in the selected key for a period of time in the specified region, if the region is
+        not specified, the global trend is returned."""
         massive = pd.DataFrame()
         if len(self.kw_list) > 5:
             blocks = [self.kw_list[i:i + 5] for i in range(0, len(self.kw_list), 5)]
@@ -67,6 +83,7 @@ class Common_trends:
         massive.to_excel(self.savedir + self.region+'_trends.xlsx')
 
     def get_global(self):
+        """Get data on relative interest in the selected key for a period of time by countries"""
         by_country = pd.DataFrame()
         if len(self.kw_list) > 5:
             blocks = [self.kw_list[i:i + 5] for i in range(0, len(self.kw_list), 5)]
@@ -85,6 +102,8 @@ class Common_trends:
         by_country.to_excel(self.savedir + 'intr_by_country.xlsx')
 
     def get_by_country(self):
+        """Get data on relative interest in the selected key for a period of time
+        by subregions in selected region(country)"""
         by_city = pd.DataFrame()
         by_region = pd.DataFrame()
         by_dma = pd.DataFrame()
@@ -114,12 +133,13 @@ class Common_trends:
             by_dma.to_excel(writer, sheet_name='DMA', index=True)
 
     def related_topics(self, ):
+        """Get data about related topics, suggested by Google to the selected key"""
         rising = pd.DataFrame()
         top = pd.DataFrame()
         for kw in self.kw_list:
             kw_list = []
             kw_list.append(kw)
-            self.pt.build_payload(kw_list, timeframe=self.timeframe, geo=self.region, gprop='')
+            self.pt.build_payload(kw_list, timeframe='today 1-y', geo=self.region, gprop='')
             rt = self.pt.related_topics()
             rt[kw]['rising']['key'] = kw
             rising = pd.concat([rising, rt[kw]['rising']], ignore_index=True)
@@ -132,13 +152,14 @@ class Common_trends:
         # self.pt.build_payload(self.kw_list, timeframe=self.timeframe, geo=self.region, gprop='')
 
     def related_searches(self):
+        """Get data about related searches, suggested by Google to the selected key"""
         rising = pd.DataFrame()
         top = pd.DataFrame()
         for kw in self.kw_list:
             kw_list = []
             kw_list.append(kw)
 
-            self.pt.build_payload(kw_list, timeframe=self.timeframe, geo=self.region, gprop='')
+            self.pt.build_payload(kw_list, timeframe='today 1-y', geo=self.region, gprop='')
             rt = self.pt.related_queries()
             if rt[kw]['rising'] is not None:
                 rt[kw]['rising']['key'] = kw
@@ -153,6 +174,7 @@ class Common_trends:
         # self.pt.build_payload(self.kw_list, timeframe=self.timeframe, geo=self.region, gprop='')
 
     def suggested_topics(self):
+        """Get data about suggested topics Google to the selected key"""
         sugg = pd.DataFrame()
         for kw in self.kw_list:
             topics = self.pt.suggestions(kw)

@@ -9,7 +9,20 @@ import time
 import pandas as pd
 
 
-def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbaks'):
+def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbacks'):
+    """
+       Getting data about product reviews by parsing reviews from product page on Wildberries.
+
+        Args:
+            sku_list (list): list of sku (unic id on marketplace)
+            max_numb (int): max number of reviews per sku
+            end_date (string): date by which reviews must be uploaded
+            filename (string): name for result file
+
+        Returns:
+            None
+    """
+
     writer = pd.ExcelWriter(filename + '.xlsx')
     end_date = datetime.datetime.strptime(end_date, "%d %B %Y")
     temp_frame = pd.DataFrame()
@@ -17,7 +30,7 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbaks'
 
         url = 'https://www.wildberries.ru/catalog/'+str(sku)+'/feedbacks'
 
-        # Запускаем браузер Chrome и открываем страницу с отзывами
+        # Launch the Chrome browser and open the reviews page
 
         chrome_options = Options()
         # chrome_options.add_argument('--headless')
@@ -25,7 +38,7 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbaks'
         driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
 
-        # Ждем, пока страница полностью загрузится
+        # Waiting for the page to fully load
         wait = WebDriverWait(driver, 20)
         wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, "ul.comments__list[data-link]")))
         total_reviews = driver.find_elements(By.XPATH, '//span[@class="product-feedbacks__count"]')
@@ -36,15 +49,15 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbaks'
 
         df = pd.DataFrame(columns=['Rating', 'Text', 'Date'])
         flag=True
-        # Прокручиваем страницу до конца
+        # Scroll to the bottom of the page
         while True:
-            # Скроллим страницу до конца
+            # Scroll the page to the end
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(random.randint(1, 10))  # Делаем паузу на 1-10 секунд для загрузки контента и обхода блокировки
+            time.sleep(random.randint(1, 10))  # We pause for 1-10 seconds to download content and bypass blocking
 
-            # Проверяем, загружены ли все отзывы
+            # Check if all reviews are loaded
             reviews = driver.find_elements(By.XPATH, './/li[@class="comments__item feedback j-feedback-slide"]')
-            if len(reviews) >= total_reviews:  # Если загружено достаточное количество отзывов, выходим из цикла
+            if len(reviews) >= total_reviews:  # If enough reviews have been loaded, exit the loop
                 break
             last_review = reviews[-1]
             last_date=last_review.find_element(By.XPATH, './/span[@class="feedback__date hide-desktop"]').get_attribute('content')
@@ -68,7 +81,7 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbaks'
             df.to_excel(writer, sheet_name=str(sku))
             print('---' * 10)
 
-        # Закрываем браузер
+        # Close the browser
         driver.quit()
     if len(sku_list) > 9:
         temp_frame.to_excel(writer, sheet_name='main')

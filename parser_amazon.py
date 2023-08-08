@@ -15,7 +15,19 @@ import pandas as pd
 
 
 def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks', by_stars=True):
-    """Load feedbacks from Amazon by Asin"""
+    """
+       Getting data about product reviews by parsing reviews from product page on Amazon.
+
+        Args:
+            sku_list (list): list of sku (unic id on marketplace)
+            max_numb (int): max number of reviews per sku
+            end_date (string): date by which reviews must be uploaded
+            filename (string): name for result file
+            by_stars (bool): load by star rating, default True
+
+        Returns:
+            None
+    """
     writer = pd.ExcelWriter(filename + '.xlsx')
     end_date=datetime.datetime.strptime(end_date, "%d %B %Y")
     temp_frame=pd.DataFrame()
@@ -33,7 +45,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
             num=0
             rate_list=[str(5),str(4),str(3),str(2),str(1)]
 
-        # Запускаем браузер Chrome и открываем страницу с отзывами
+        # Launch the Chrome browser and open the reviews page
 
         chrome_options = Options()
         # chrome_options.add_argument('--headless')
@@ -42,6 +54,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         driver.get(url)
         driver.delete_all_cookies()
 
+        # Create base dataframe
         df = pd.DataFrame(columns=['Rating', 'Status', 'Text', 'Date', 'Region','Link','Influencer','Main_Asin'])
         pattern = r"(?<=\w|\))(?=[A-Z])"
         wait = WebDriverWait(driver, 30)
@@ -69,7 +82,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         # sort.click()
 
         while index < max_numb:
-            # Ждем, пока страница полностью загрузится
+            # Waiting for the page to fully load
             if by_stars and (index ==0 or index==100):
                 flag=False
                 time.sleep(1)
@@ -88,6 +101,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
             reviews = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.a-section.review.aok-relative")))
             # Load all review in page(10 units)
             page_reviews = driver.find_elements(By.CSS_SELECTOR, "div.a-section.review.aok-relative")
+
 
             for review in page_reviews:
                 exp = None
@@ -178,6 +192,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
             time.sleep(random.randint(1, 7))
             # driver.refresh()
             wait = WebDriverWait(driver, 30)
+            # Load new page
             try:
                 next_button = driver.find_element(By.CSS_SELECTOR, "li.a-last")
             except NoSuchElementException:
@@ -201,6 +216,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
 
         driver.quit()
         df['Date'] = pd.to_datetime(df['Date'])
+        # if list of products is too big, concat in one list, elsr
         if len(sku_list) > 9:
             temp_frame=pd.concat([temp_frame, df], axis=0)
         else:
