@@ -123,11 +123,16 @@ class Custom_parser():
                     # value = element.find_element(By.XPATH, './/td/span').text
                     value = driver.execute_script("return arguments[0].innerText;", element)
                     numbers = re.findall(r'\d+', value)
+                    result = re.search(r"Материал посуды\s+(.+)", value)
+
+                    # Извлекаем информацию из совпадения и убираем лишние пробелы
+                    if result:
+                        value = result.group(1).strip()
                     # Print the value
                     print("Value:", value)
                 except NoSuchElementException:
                     numbers = 'Нет данных'
-                record = {'id': url.split('/')[4], 'Материал посуды': numbers}
+                record = {'id': url.split('/')[4], 'Материал посуды': value}
                 df.loc[len(df)] = record
             except Exception as e:
                 df.to_excel(self.filename + ".xlsx")
