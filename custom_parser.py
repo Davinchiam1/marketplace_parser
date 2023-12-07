@@ -87,7 +87,7 @@ class Custom_parser():
         driver.quit()
         print('Finished')
 
-    def scrap_data(self):
+    def scrap_data(self, field_name='Материал посуды'):
         """Get data from specific fields in product data page from WB"""
         temp_frame = pd.read_excel(self.url_file)
         url_list = list(temp_frame[self.url_colum].drop_duplicates())
@@ -95,7 +95,7 @@ class Custom_parser():
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
         driver = webdriver.Chrome(options=chrome_options)
-        df = pd.DataFrame(columns=['id', 'Материал посуды'])
+        df = pd.DataFrame(columns=['id', field_name])
         # df['id']=temp_frame['id']
         start_time = time.time()
         for elem, url in enumerate(url_list):
@@ -117,13 +117,13 @@ class Custom_parser():
                 time.sleep(random.randint(1, 4))
                 wait = WebDriverWait(driver, 40)
                 try:
-                    element = driver.find_element(By.XPATH, '//tr[.//span[contains(text(), "Материал посуды")]]')
+                    element = driver.find_element(By.XPATH, f'//tr[.//span[contains(text(), "{field_name}")]]')
 
                     # Get the value from the corresponding td element
                     # value = element.find_element(By.XPATH, './/td/span').text
                     value = driver.execute_script("return arguments[0].innerText;", element)
                     numbers = re.findall(r'\d+', value)
-                    result = re.search(r"Материал посуды\s+(.+)", value)
+                    result = re.search(rf"{field_name}\s+(.+)", value)
 
                     # Извлекаем информацию из совпадения и убираем лишние пробелы
                     if result:
@@ -132,7 +132,7 @@ class Custom_parser():
                     print("Value:", value)
                 except NoSuchElementException:
                     numbers = 'Нет данных'
-                record = {'id': url.split('/')[4], 'Материал посуды': value}
+                record = {'id': url.split('/')[4], field_name: value}
                 df.loc[len(df)] = record
             except Exception as e:
                 df.to_excel(self.filename + ".xlsx")
@@ -181,12 +181,8 @@ class Custom_parser():
         driver.quit()
         print('Finished')
 
+# Code snippets for testing and default use
 
-Custom_parser(url_file='D:\\Аналитика\\WB_Ozon\\для отчетов\\графины\\urls.xlsx', url_colum='url').scrap_data()
+# Custom_parser(url_file='D:\\Аналитика\\WB_Ozon\\для отчетов\\графины\\urls.xlsx', url_colum='url').scrap_data()
 
-#
-#
-# scrap(
-#     url_file='Z:\\Аналитика\\WB_Ozon\\Mpstat\\Исследование категорий\\мужской крем для лица\\очищено\Уход за лицом и телом Крем 01.06.2022-01.06.2023.xlsx',
-#     filename='vols1')
-# url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'
+

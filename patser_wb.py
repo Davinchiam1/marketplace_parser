@@ -60,7 +60,7 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbacks
             if len(reviews) >= total_reviews:  # If enough reviews have been loaded, exit the loop
                 break
             last_review = reviews[-1]
-            last_date=last_review.find_element(By.XPATH, './/span[@class="feedback__date hide-desktop"]').get_attribute('content')
+            last_date=last_review.find_element(By.XPATH, './/span[@class="feedback__date"]').get_attribute('content')
             last_date=datetime.datetime.strptime(last_date.split('T')[0], "%Y-%m-%d")
             if last_date<end_date:
                 break
@@ -70,7 +70,7 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbacks
             feedback_text = feedbak.find_element(By.XPATH, './/p[@class="feedback__text"]').text
             rating_element = feedbak.find_element(By.CSS_SELECTOR, "span.feedback__rating").get_attribute("class")
             rating = int(rating_element.split("star")[-1])
-            date = feedbak.find_element(By.XPATH, '//span[@class="feedback__date hide-desktop"]').get_attribute('content')
+            date = feedbak.find_element(By.XPATH, '//span[@class="feedback__date"]').get_attribute('content')
             date = date.split('T')[0] + ' ' + date.split('T')[1][:-1]
             df = pd.concat(
                 [df, pd.DataFrame({'Rating': [rating], 'Text': [feedback_text], 'Date': [date]})],
@@ -88,4 +88,6 @@ def scrap_feedbaks(sku_list=[],max_numb=4000, end_date=None, filename='feedbacks
     writer.close()
     print('Finished')
 
-# scrap_feedbaks(['97833688'], end_date='1 June 2023', filename='test4')
+# Code snippets for testing and default use
+
+# scrap_feedbaks(['97833688'], end_date='1 October 2023', filename='test4')

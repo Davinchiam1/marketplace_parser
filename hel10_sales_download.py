@@ -309,18 +309,8 @@ def load_searches(key_list=None, log_pas_file='logins.txt', save_directory=None)
     print('Finished')
     # _rename_files_in_folder(folder_path=os.path.join(os.path.expanduser("~"), "Downloads"),asin_list=asin_list)
 
-# element = driver.find_element(By.CSS_SELECTOR, '#h10-page-widget > div')
-#
 
-# sub_element = element.shadow_root
-# element=sub_element.find_element(By.CSS_SELECTOR,'div.sc-ePwGgO.cHqWHe.react-draggable')
-# element.click()
-# # sub_element = element.shadow_root
-# # load= sub_element.find_elements(By.CSS_SELECTOR,'button.sc-kBPahn.loPNhA.sc-dKjDRw.gDtPYH')
-# # load[-1].click()
-# # load= driver.find_element(By.CSS_SELECTOR,'button[data-testid="close-button"]')
-# # load.click()
-# time.sleep(5)
-# driver.refresh()
-# print('refreshed')
+# Code snippets for testing and default use
+
+
 # load_sales(asin_list='asins.xlsx')

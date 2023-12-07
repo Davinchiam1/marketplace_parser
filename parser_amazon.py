@@ -38,7 +38,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
         # Pause after first page
         if elem > 0:
             time.sleep(random.randint(20, 40))
-        url = 'https://www.amazon.com/t/product-reviews/' + str(sku)
+        url = 'https://www.amazon.com/product-reviews/' + str(sku)
         index = 0
         flag = False
         if by_stars:
@@ -62,6 +62,8 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
 
         # Sort by most resent
         try:
+            time.sleep(5)
+            driver.refresh()
             sort = driver.find_element(By.CSS_SELECTOR, 'span.a-button-text.a-declarative[data-action="a-dropdown-button"]')
             sort.click()
             option = driver.find_element(By.ID, "sort-order-dropdown_1")
@@ -229,6 +231,7 @@ def scrap_feedbaks(sku_list=[], max_numb=4000, end_date=None, filename='feedbaks
     print('Finished')
     writer.close()
 
+# Code snippets for testing and default use
 
 # scrap_feedbaks(['B00280M13O','B079YXFCWT'], end_date='1 January 2021', filename='test5')
 # url = 'https://www.amazon.com/Garden-Life-Organics-Vitamins-Certified/product-reviews/B06XSDP7RX'

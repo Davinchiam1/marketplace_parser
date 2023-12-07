@@ -183,6 +183,9 @@ class Common_trends:
             sugg = pd.concat([sugg, temp], ignore_index=True)
         sugg.to_excel(self.savedir + 'Suggested topics.xlsx')
 
+
+# Code snippets for testing and default use
+
 # test = Common_trends(kw_list=['iphone', 'ios'],savedir='C:\\Users\\aos.user5\\Desktop')
 # test.get_region()
 # test.related_searches()
