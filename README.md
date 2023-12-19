@@ -1,6 +1,6 @@
 # Marketplace Scraper
 
-This project is designed for scraping and parsing product data on marketplaces in small volumes. The main features include:
+This project is designed for scrapling and parsing product data on marketplaces in small volumes. The main features include:
 
 ## Key Features
 
